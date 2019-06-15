@@ -37,9 +37,12 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
     function handle_content_display(& $event, $params) {
         global $ACT, $INFO, $TOC, $ID;
         
+        if (($ACT != 'show') && ($ACT != 'export_pdf')) {return;}
+        
         $template = $this->resolve_template();
         if ( !$template) { return; }
         
+       
         $oldtoc = $TOC;
         $template = p_wiki_xhtml( $template );
 
