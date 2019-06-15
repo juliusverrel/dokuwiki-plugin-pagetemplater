@@ -30,7 +30,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
      * Register the eventhandlers.
      */
     function register(Doku_Event_Handler $controller) {
-        $controller->register_hook('TPL_CONTENT_DISPLAY', 'BEFORE', $this, 'handle_content_display', array ());
+        $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'BEFORE', $this, 'handle_content_display', array ());
         $controller->register_hook('PARSER_METADATA_RENDER', 'AFTER', $this, 'handle_meta_data', array ());
     }
 
@@ -68,7 +68,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
         $TOC = $oldtoc;
 
         $data = array('xhtml',& $event->data);
-        trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);
+        /*trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);*/
                 
         return true;
     }
