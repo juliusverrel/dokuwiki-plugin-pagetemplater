@@ -46,7 +46,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
         // set the replacements
         $replace = $INFO['meta']['templater'];
         unset($replace['page']);
-        $replace['content'] = $event->data;
+        $replace['content'] = $event->data[1];
         $replace['page'] = $ID;
         $replace['namespace'] = getNS($ID);
 
@@ -55,19 +55,19 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
             if ( $new != $template ) { $template = $new; }
             if ( $key != 'content' && substr($key, 0, 1) == '!' ) {
                 $rkey = substr($key, 1);
-                $replace[$key] = p_render('xhtml', p_get_instructions($replace[$key]),$info);
+                $replace[$key] = p_render($event->data[0], p_get_instructions($replace[$key]),$info);
             } else { $rkey = $key; }
             $new = str_replace('@@' . strtoupper(trim($rkey)) . '@@', $replace[$key], $template);
             $new = str_replace(urlencode('@@') . strtoupper(trim($rkey)) . urlencode('@@'), $replace[$key], $new);
         }
         
-        if ( $new != $event->data ) {
-            $event->data = $new;
+        if ( $new != $event->data[1] ) {
+            $event->data[1] = $new;
         }
         
         $TOC = $oldtoc;
 
-        $data = array('xhtml',& $event->data);
+        /*$data = array('xhtml',& $event->data);*/
         /*trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);*/
                 
         return true;
