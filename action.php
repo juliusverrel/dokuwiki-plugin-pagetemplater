@@ -28,26 +28,63 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
 
     private $call_depth = 0;  
     
-    /**
+    /*
      * Register the eventhandlers.
      */
-    function register(Doku_Event_Handler $controller) {
-        $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, 'handle_content_display', array ());
+       function register(Doku_Event_Handler $controller) {
+        $controller->register_hook('TPL_CONTENT_DISPLAY', 'BEFORE', $this, 'handle_content_display', array ());
+        $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, 'render_postprocess_dw2pdf', array ());
         $controller->register_hook('PARSER_METADATA_RENDER', 'AFTER', $this, 'handle_meta_data', array ());
     }
-
+    
+    // from original template
     function handle_content_display(& $event, $params) {
         global $ACT, $INFO, $TOC, $ID;
         
-        if ($this->call_depth > 0) {return TRUE;} // make sure it is not called recursively
-        $this->call_depth = $this->call_depth+1;
+        $template = $this->resolve_template();
+        if ( !$template || $ACT != 'show' ) { return; }
         
-        if (($ACT != 'show') && ($ACT != 'export_pdf')) {return;}
+        $oldtoc = $TOC;
+        $template = p_wiki_xhtml( $template );
+        // set the replacements
+        $replace = $INFO['meta']['templater'];
+        unset($replace['page']);
+        $replace['content'] = $event->data;
+        $replace['page'] = $ID;
+        $replace['namespace'] = getNS($ID);
+        $new = $template;
+        foreach (array_keys($replace) as $key) {
+            if ( $new != $template ) { $template = $new; }
+            if ( $key != 'content' && substr($key, 0, 1) == '!' ) {
+                $rkey = substr($key, 1);
+                $replace[$key] = p_render('xhtml', p_get_instructions($replace[$key]),$info);
+            } else { $rkey = $key; }
+            $new = str_replace('@@' . strtoupper(trim($rkey)) . '@@', $replace[$key], $template);
+            $new = str_replace(urlencode('@@') . strtoupper(trim($rkey)) . urlencode('@@'), $replace[$key], $new);
+        }
         
+        if ( $new != $event->data ) {
+            $event->data = $new;
+        }
+        
+        $TOC = $oldtoc;
+        $data = array('xhtml',& $event->data);
+        trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);
+                
+        return true;
+    }
+    
+    // added to handle dw2pdf
+    function render_postprocess_dw2pdf (& $event, $params) {
+        global $ACT, $INFO, $TOC, $ID;
+        
+        if ($event->data[0] != 'dw2pdf') {return;}
+
+        $this->call_depth ++;
+       
         $template = $this->resolve_template();
         if ( !$template) { return; }
         
-       
         $oldtoc = $TOC;
         $template = p_wiki_xhtml( $template );
 
@@ -75,10 +112,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
         
         $TOC = $oldtoc;
 
-        /*$data = array('xhtml',& $event->data);*/
-        /*trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);*/
-             
-        $this->call_depth = $this->call_depth-1;
+        $this->call_depth --;
         
         return true;
     }
