@@ -26,7 +26,7 @@ require_once(DOKU_INC . 'inc/pageutils.php');
 
 class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
 
-    private $first_call = FALSE;  
+    private $call_depth = 0;  
     
     /**
      * Register the eventhandlers.
@@ -39,8 +39,8 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
     function handle_content_display(& $event, $params) {
         global $ACT, $INFO, $TOC, $ID;
         
-        if ($this->first_call) {return;} // make sure it is not called recursively
-        $this->first_call = TRUE;
+        if ($this->call_depth > 0) {return TRUE;} // make sure it is not called recursively
+        $this->call_depth = $this->call_depth+1;
         
         if (($ACT != 'show') && ($ACT != 'export_pdf')) {return;}
         
@@ -78,7 +78,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
         /*$data = array('xhtml',& $event->data);*/
         /*trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);*/
              
-        $this->first_call = FALSE; // indicate that top-level call has been left, so this handler can be called again
+        $this->call_depth = $this->call_depth-1;
         
         return true;
     }
