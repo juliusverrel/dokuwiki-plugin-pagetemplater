@@ -39,7 +39,7 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
     function handle_content_display(& $event, $params) {
         global $ACT, $INFO, $TOC, $ID;
         
-        if ($this->first_call) {return;} // make sure it is not called recursively
+        if (($this->first_call) && ($ACT== 'export_pdf')) {return;} // make sure it is not called recursively
         
         $this->first_call = TRUE;
         
@@ -79,7 +79,8 @@ class action_plugin_pagetemplater extends DokuWiki_Action_Plugin {
         /*$data = array('xhtml',& $event->data);*/
         /*trigger_event('RENDERER_CONTENT_POSTPROCESS',$data);*/
              
-        $this->first_call = FALSE; // indicate that top-level call has been left, so this handler can be called again
+        if ($ACT== 'export_pdf')
+        {$this->first_call = FALSE;} // indicate that top-level call has been left, so this handler can be called again
         
         return true;
     }
